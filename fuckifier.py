@@ -1,95 +1,92 @@
 import numpy as np
 import nltk
+nltk.download('averaged_perceptron_tagger')
 import random
-"""A really, really shit program just to test the nltk tagging facility
-Will add fucks to your sentences so that you don't have to give any.
-"""
 
-class stringParser():
-    
-    numberofwords=0
-    """
+
+"""
 Ignore: CC, DT, LS, MD, PDT, POS, TO, IN
     ing: CD, EX, PRP$, UH, WDT, WP, WP$, WRB
     ing/ingest: NN, PRP, NNPS, NNP, FW, SYM
     ing/ingly: VB, VBD, VBG, VBN, VBP, VBZ, RB, RBR, RBS, JJ, JJR, JJS
+"""
+
+endings = {
+    'ignorelist': ["CC", "IN", "DT", "LS", "MD", "PDT", "POS", "TO", "PRP"],
+    'ing': ["CD", "EX", "PRP$", "UH", "WDT", "WP", "WP$", "WRB"],
+    'ingest': ["NN", "NNPS", "NNP", "FW", "SYM"],
+    'ingly': ["VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "RB", "RBR", "RBS", "JJ", "JJR", "JJS"]
+
+}
+
+class theFuckifier():
     """
-    
-    ignorelist=["CC", "IN", "DT", "LS", "MD", "PDT", "POS", "TO", "PRP"]
-    ing=["CD", "EX", "PRP$", "UH", "WDT", "WP", "WP$", "WRB"]
-    ingest=["NN", "NNPS", "NNP", "FW", "SYM"]
-    ingly=["VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "RB", "RBR", "RBS", "JJ", "JJR", "JJS"]
-    
-    
-    def getWordsInOrder(self, inputstring):                
-        wordsInOrdertuple=tuple(inputstring.split(" "))
-        self.numberofwords=np.size(wordsInOrdertuple)   
-        return wordsInOrdertuple
-    
-    def parsemywords(self, inputstring):
-        mywords=inputstring.split(" ")
-        taggedlist=nltk.pos_tag(mywords)
-        self.numberofwords=len(taggedlist)
-        return taggedlist
-    
+    Will add fucks to your sentences so that you don't have to give any.
+    """
+
+    endings_dict = None
+    max_fucks_given = 0
+
+    def __init__(self, endings_dict=endings_dict, max_fucks_given=10):
+
+        self.endings_dict = endings
+        self.max_fucks_given = max_fucks_given
+
+    def parse_and_pos_tag(self, input_string, reset_max_fucks=True):
+        pos_tagged_list = nltk.pos_tag(input_string.split(" "))
+
+        if reset_max_fucks == True:
+            self.set_max_fucks(max_fucks_given=len(pos_tagged_list))
+
+        return pos_tagged_list
 
 
-class fingStringParser(stringParser):
-    
-    maxnumberofFs=0
-    prefedlist=[]
-    fedlist=[]
-    
-    def setmaxnumberofFs(self):
-        self.maxnumberofFs=self.numberofwords
-        
-    def fstoadd(self):
-        nroffs=np.random.randint(1, high=self.maxnumberofFs+1)
-        print "Max number of fucks given this time: ", nroffs
-        return nroffs
-    
-    def setprefedlist(self, mylist):
-        self.prefedlist=mylist
-    
-    def getfindices(self):
-        indexarray=np.arange(len(self.prefedlist))
-        random.shuffle(indexarray)
-        nrofFs=self.fstoadd()
-        indexlist=sorted(indexarray[:nrofFs])
-        return indexlist
-        
-    def fuckify(self, indexlist):
-        #print indexlist
-        #print self.prefedlist
-        counter=0
-        
-        for i in self.prefedlist:
-            if counter in indexlist:
-                if self.prefedlist[counter][1] in self.ing:
-                    self.fedlist.append("fucking "+self.prefedlist[counter][0])
-                elif self.prefedlist[counter][1] in self.ingest:
-                    if np.random.randint(0, high=20)>7: self.fedlist.append("fuckingest "+self.prefedlist[counter][0])
-                    else: self.fedlist.append("fucking "+self.prefedlist[counter][0] )
-                elif self.prefedlist[counter][1] in self.ingly:
-                    if np.random.randint(0, high=20)>7: self.fedlist.append("fuckingly "+self.prefedlist[counter][0])
-                    else: self.fedlist.append( "fucking "+self.prefedlist[counter][0] )
-                elif self.prefedlist[counter][1] in self.ignorelist:
-                    self.fedlist.append(self.prefedlist[counter][0])
+    def fuckify_string(self, input_string, fucks_to_give=10, fuck_indexes=None):
+
+        pos_tagged_list = self.parse_and_pos_tag(input_string)
+
+        if fuck_indexes == None:
+            fuck_indexes = self.calculate_fuck_insert_indexes(pos_tagged_list, number_of_fucks=fucks_to_give)
+
+        fucked_list = []
+
+        for i in range(len(pos_tagged_list)):
+            word = pos_tagged_list[i][0]
+            tag = pos_tagged_list[i][1]
+
+            if i in fuck_indexes:
+                if tag in self.endings_dict["ing"]:
+                    fucked_list.append("fucking " + word)
+                elif tag in self.endings_dict["ingest"]:
+                    if np.random.randint(0, high=20) > 7:
+                        fucked_list.append("fuckingest " + word)
+                    else:
+                        fucked_list.append("fucking " + word)
+                elif tag in self.endings_dict["ingly"]:
+                    if np.random.randint(0, high=20) > 7:
+                        fucked_list.append("fuckingly " + word)
+                    else:
+                        fucked_list.append("fucking " + word)
+                elif tag in self.endings_dict["ignorelist"]:
+                    fucked_list.append(word)
             else:
-                self.fedlist.append(self.prefedlist[counter][0])
-            
-            counter=counter+1
-             
-    def getFuckifiedString(self):
-        return " ".join(self.fedlist)        
+                fucked_list.append(word)
 
-        
-    def __init__(self, inputstring):
-        self.setprefedlist(self.parsemywords(inputstring))
-        self.setmaxnumberofFs()
-        
+        return " ".join(fucked_list)
 
-myfparser=fingStringParser("hello, you sexy onerous beast full of everything good")
-myfparser.fuckify(myfparser.getfindices())
-print myfparser.getFuckifiedString()
+    def set_max_fucks(self, max_fucks_given=0):
+        self.max_fucks_given = max_fucks_given
 
+    def calculate_fucks_given(self, max_fucks=1):
+        return np.random.randint(1, high=(max_fucks+1))
+
+    def calculate_fuck_insert_indexes(self, taggedlist, number_of_fucks=0):
+        fuck_indexes = np.arange(len(taggedlist))
+        random.shuffle(fuck_indexes)
+
+        if number_of_fucks == 0:
+            number_of_fucks = self.calculate_fucks_given(self.max_fucks_given)
+        else:
+            number_of_fucks = self.calculate_fucks_given(number_of_fucks)
+
+        return sorted(fuck_indexes[:number_of_fucks])
